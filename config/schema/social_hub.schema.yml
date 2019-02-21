@@ -1,0 +1,32 @@
+social_hub.platform.*:
+  type: config_entity
+  label: Platform
+  mapping:
+    id:
+      type: string
+      label: ID
+    label:
+      type: label
+      label: Label
+    plugins:
+      type: sequence
+      label: Plugins
+      sequence:
+        type: string
+        label: Plugin
+    configuration:
+      type: sequence
+      label: Configuration
+      sequence:
+        type: social_hub.platform.plugin.[%key]
+
+social_hub_platform_configuration:
+  type: config_object
+
+social_hub.platform.plugin.*:
+  type: social_hub_platform_configuration
+  label: Configuration
+  mapping:
+    id:
+      type: string
+      label: Plugin ID
