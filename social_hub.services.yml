@@ -1,0 +1,4 @@
+services:
+  plugin.manager.social_hub.platform:
+    class: Drupal\social_hub\PlatformIntegrationPluginManager
+    parent: default_plugin_manager
