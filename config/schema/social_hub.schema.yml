@@ -22,11 +22,30 @@ social_hub.platform.*:
 
 social_hub_platform_configuration:
   type: config_object
-
-social_hub.platform.plugin.*:
-  type: social_hub_platform_configuration
   label: Configuration
   mapping:
     id:
       type: string
       label: Plugin ID
+
+social_hub.platform.plugin.*:
+  type: social_hub_platform_configuration
+
+social_hub.platform.plugin.follow:
+  type: social_hub_platform_configuration
+  mapping:
+    platform_url:
+      type: string
+      label: 'Platform URL'
+    follow_path:
+      type: string
+      label: 'Follow path'
+    link_text:
+      type: label
+      label: 'Link text'
+    link_title:
+      type: label
+      label: 'Link title'
+    link_classes:
+      type: string
+      label: 'Link CSS classes'
