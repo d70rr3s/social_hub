@@ -123,6 +123,9 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
     return (bool) $this->status;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function setConfiguration(array $configuration) {
     $this->configuration = NestedArray::mergeDeep(
       $this->configuration,
@@ -130,6 +133,9 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getPluginCollection() {
     $plugin_manager = \Drupal::service('plugin.manager.social_hub.platform');
     $this->pluginCollection = new DefaultLazyPluginCollection($plugin_manager, $this->getConfiguration());

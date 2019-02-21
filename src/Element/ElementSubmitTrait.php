@@ -58,7 +58,7 @@ trait ElementSubmitTrait {
   public static function validateElementSubmit(array &$element, FormStateInterface $form_state) {
     // Button-level #validate handlers replace the form-level ones, which means
     // that executeElementSubmitHandlers() won't be triggered.
-    if ($handlers = $form_state->getValidateHandlers()) {
+    if ($form_state->getValidateHandlers()) {
       throw new \Exception('The current form must not have button-level #validate handlers');
     }
   }

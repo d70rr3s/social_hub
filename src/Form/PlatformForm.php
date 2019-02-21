@@ -100,7 +100,7 @@ class PlatformForm extends EntityForm {
       '#type' => 'checkboxes',
       '#title' => $this->t('Available plugins'),
       '#description' =>
-        $this->t('Select which integration plugins should be used for this platform.'),
+      $this->t('Select which integration plugins should be used for this platform.'),
       '#options' => $available_plugins,
       '#default_value' => $plugins,
       '#empty_value' => '',

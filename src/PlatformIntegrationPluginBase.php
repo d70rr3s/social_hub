@@ -12,8 +12,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Base class for platform integration plugins.
  */
-abstract class PlatformIntegrationPluginBase extends PluginBase
-  implements PlatformIntegrationPluginInterface, ContainerFactoryPluginInterface {
+abstract class PlatformIntegrationPluginBase extends PluginBase implements PlatformIntegrationPluginInterface, ContainerFactoryPluginInterface {
 
   use PluginWithFormsTrait;
 

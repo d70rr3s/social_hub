@@ -14,6 +14,7 @@ interface PlatformInterface extends ConfigEntityInterface, EntityWithPluginColle
    * Get the integration plugins.
    *
    * @return array
+   *   The integration plugins.
    */
   public function getPlugins();
 
@@ -29,6 +30,7 @@ interface PlatformInterface extends ConfigEntityInterface, EntityWithPluginColle
    * Get plugins' configuration.
    *
    * @return array
+   *   The configuration from the integration plugins.
    */
   public function getConfiguration();
 
@@ -44,9 +46,10 @@ interface PlatformInterface extends ConfigEntityInterface, EntityWithPluginColle
    * Get the plugin collection instance.
    *
    * @return \Drupal\Component\Plugin\LazyPluginCollection
+   *   The plugin collection.
    */
   public function getPluginCollection();
-  
+
   /**
    * Build platform output for a given context.
    *
