@@ -155,7 +155,7 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
   /**
    * {@inheritdoc}
    */
-  public function build() {
+  public function build(array $plugins = []) {
     $build = [
       '#type' => 'container',
       '#title_display' => FALSE,
@@ -163,6 +163,10 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
 
     /** @var \Drupal\social_hub\PlatformIntegrationPluginInterface $plugin */
     foreach ($this->getPluginCollection() as $plugin) {
+      if (!empty($plugins) && !in_array($plugin->getPluginId(), $plugins, TRUE)) {
+        continue;
+      }
+
       $build[] = $plugin->build();
     }
 

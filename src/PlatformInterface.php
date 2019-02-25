@@ -53,11 +53,14 @@ interface PlatformInterface extends ConfigEntityInterface, EntityWithPluginColle
   /**
    * Build platform output for a given context.
    *
+   * @param array $plugins
+   *   Build the entity using these plugins. If none all plugins will be used.
+   *
    * @return array
    *   A render array.
    *
    * @see \Drupal\social_hub\PlatformIntegrationPluginInterface::build()
    */
-  public function build();
+  public function build(array $plugins = []);
 
 }
