@@ -22,9 +22,19 @@ interface PlatformIntegrationPluginInterface extends PluginWithFormsInterface, P
   /**
    * Build the plugin output.
    *
+   * @param array $context
+   *   An assoc array to serve as plugin's build context.
+   *   Available keys:
+   *    - platform: The platform entity being built.
+   *    - entity: An entity instance if the platform is being used over
+   *      an entity e.g.: sharing.
+   *    - user: Current user instance. If not present will be taken
+   *      from current session value. In mind that 'entity' is also
+   *      a user will take preference over this value.
+   *
    * @return array
    *   A render array for the output.
    */
-  public function build();
+  public function build(array $context = []);
 
 }

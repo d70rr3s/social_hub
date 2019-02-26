@@ -5,6 +5,7 @@ namespace Drupal\social_hub\Entity;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\Entity\ConfigEntityBase;
 use Drupal\Core\Plugin\DefaultLazyPluginCollection;
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\social_hub\PlatformInterface;
 
 /**
@@ -155,10 +156,14 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
   /**
    * {@inheritdoc}
    */
-  public function build(array $plugins = []) {
+  public function build(array $plugins = [], array $context = []) {
     $build = [
       '#type' => 'container',
       '#title_display' => FALSE,
+    ];
+
+    $context += [
+      'platform' => $this,
     ];
 
     /** @var \Drupal\social_hub\PlatformIntegrationPluginInterface $plugin */
@@ -167,8 +172,12 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
         continue;
       }
 
-      $build[] = $plugin->build();
+      $build[] = $plugin->build($context);
     }
+
+    BubbleableMetadata::createFromRenderArray($build)
+      ->merge(BubbleableMetadata::createFromObject($this))
+      ->applyTo($build);
 
     return $build;
   }

@@ -12,8 +12,7 @@ use Drupal\social_hub\PlatformIntegrationPluginBase;
  * @PlatformIntegration(
  *   id = "follow",
  *   label = @Translation("Follow"),
- *   description = @Translation("Allow platforms to be rendered as 'Follow'
- *   links.")
+ *   description = @Translation("Allow platforms to be rendered as 'Follow' links.")
  * )
  *
  * @internal
@@ -92,11 +91,12 @@ class Follow extends PlatformIntegrationPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function build() {
+  public function build(array $context = []) {
     $options = ['absolute' => TRUE, 'external' => TRUE];
+    $uri = sprintf('%s/%s', $this->configuration['platform_url'], $this->configuration['follow_path']);
     $build = [
       '#type' => 'link',
-      '#url' => Url::fromUri($this->getUri(), $options),
+      '#url' => Url::fromUri($uri, $options),
       '#title' => '',
       '#attributes' => [
         'class' => [],
@@ -118,16 +118,6 @@ class Follow extends PlatformIntegrationPluginBase {
     }
 
     return $build;
-  }
-
-  /**
-   * Get the URI.
-   *
-   * @return string
-   *   The URI string.
-   */
-  protected function getUri() {
-    return sprintf('%s/%s', $this->configuration['platform_url'], $this->configuration['follow_path']);
   }
 
 }

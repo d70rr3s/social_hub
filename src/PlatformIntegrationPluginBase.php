@@ -3,18 +3,36 @@
 namespace Drupal\social_hub;
 
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Plugin\PluginWithFormsTrait;
+use Drupal\Core\Routing\CurrentRouteMatch;
+use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Base class for platform integration plugins.
+ *
+ * @phpcs:disable Drupal.Commenting.InlineComment.InvalidEndChar
+ * @phpcs:disable Drupal.Commenting.PostStatementComment.Found
  */
-abstract class PlatformIntegrationPluginBase extends PluginBase implements PlatformIntegrationPluginInterface, ContainerFactoryPluginInterface {
+abstract class PlatformIntegrationPluginBase extends PluginBase implements
+    PlatformIntegrationPluginInterface,
+    ContainerFactoryPluginInterface {
 
   use PluginWithFormsTrait;
+
+  /**
+   * The route match service.
+   *
+   * @var \Drupal\Core\Routing\CurrentRouteMatch
+   */
+  protected $routeMatch;
+
+  protected $currentUser;
 
   /**
    * Constructs PlatformPluginBase instance.
@@ -25,26 +43,83 @@ abstract class PlatformIntegrationPluginBase extends PluginBase implements Platf
    *   The plugin id.
    * @param mixed $plugin_definition
    *   The plugin definition.
+   * @param \Drupal\Core\Routing\CurrentRouteMatch $route_match
+   *   The current matched route.
+   * @param \Drupal\Core\Session\AccountInterface $current_user
+   *   The current user.
    */
-  public function __construct(array $configuration, string $plugin_id, $plugin_definition) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    CurrentRouteMatch $route_match,
+    AccountInterface $current_user) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
     $this->setConfiguration($configuration);
+    $this->routeMatch = $route_match;
+    $this->currentUser = $current_user;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition);
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('current_route_match'),
+      $container->get('current_user')
+    );
+  }
+
+  /**
+   * Prepare context.
+   *
+   * @param array $context
+   *   The context array.
+   *
+   * @return array
+   *   The context array.
+   */
+  protected function prepareContext(array $context = []) {
+    if (!isset($context['entity']) ||
+      !($context['entity'] instanceof EntityInterface)) {
+      $route = $this->routeMatch->getRouteObject();
+
+      if ($route !== NULL) {
+        $parameters = $route->getOption('parameters');
+
+        if (!empty($parameters)) {
+          // Determine if the current route represents an entity.
+          foreach ($parameters as $name => $options) {
+            if (isset($options['type']) && strpos($options['type'], 'entity:') === 0) {
+              $entity = $this->routeMatch->getParameter($name);
+              if ($entity instanceof ContentEntityInterface && $entity->hasLinkTemplate('canonical')) {
+                $context[$entity->getEntityTypeId()] = $entity;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!isset($context['user']) ||
+      !($context['user'] instanceof AccountInterface)) {
+      $context['user'] = $this->currentUser;
+    }
+
+    return $context;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function build() {
+  public function build(array $context = []) {
+    $this->prepareContext($context);
+
     return [
-      '#markup' => '<!-- The ' . static::class . '::build() is not implemented. -->',
+      '#markup' => '<!-- The ' . static::class . '::build() is not implemented. Called from ' . $context['platform']->id() . ' platform. -->', // NOSONAR
     ];
   }
 
