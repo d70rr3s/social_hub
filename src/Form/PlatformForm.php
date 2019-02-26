@@ -155,7 +155,8 @@ class PlatformForm extends EntityForm {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     parent::submitForm($form, $form_state);
-    $this->entity->setConfiguration($form_state->getValue(['configuration']));
+    $this->entity->setConfiguration(array_filter($form_state->getValue(['configuration'])));
+    $this->entity->setPlugins(array_filter($form_state->getValue(['plugins'])));
   }
 
   /**
@@ -163,7 +164,6 @@ class PlatformForm extends EntityForm {
    */
   public function save(array $form, FormStateInterface $form_state) {
     // Clean checkboxes values.
-    $this->entity->setPlugins(array_filter(array_values($this->entity->getPlugins())));
     $result = parent::save($form, $form_state);
     $message_args = ['%label' => $this->entity->label()];
     $message = $result === SAVED_NEW
