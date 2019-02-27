@@ -49,3 +49,54 @@ social_hub.platform.plugin.follow:
     link_classes:
       type: string
       label: 'Link CSS classes'
+
+social_hub.platform.plugin.share:
+  type: social_hub_platform_configuration
+  mapping:
+    share_url:
+      type: string
+      label: 'Share URL'
+    share_parameters:
+      type: string
+      label: 'Share parameters'
+    script_type:
+      type: string
+      label: 'Script type'
+    inline:
+      type: string
+      label: 'Inline script'
+    library:
+      type: string
+      label: 'library'
+    external:
+      type: mapping
+      label: 'External script'
+      mapping:
+        url:
+          type: string
+          label: URL
+        attributes:
+          type: mapping
+          label: Attributes
+          mapping:
+            async:
+              type: boolean
+              label: 'Load asynchronously'
+            minified:
+              type: boolean
+              label: Minified
+        preprocess:
+          type: boolean
+          label: Preprocess
+        browsers:
+          type: string
+          label: Browsers
+    link_text:
+      type: label
+      label: 'Link text'
+    link_title:
+      type: label
+      label: 'Link title'
+    link_classes:
+      type: string
+      label: 'Link CSS classes'
