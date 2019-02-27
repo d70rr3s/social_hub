@@ -3,4 +3,4 @@ type: module
 description: A module to serve as hub for social follow/share features.
 package: Integrations
 core: 8.x
-configure: social_hub.settings_form
+configure: entity.platform.collection

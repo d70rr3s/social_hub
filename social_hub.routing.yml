@@ -1,16 +1,8 @@
-social_hub.settings_form:
-  path: '/admin/config/services/social-hub'
-  defaults:
-    _title: 'Social Hub'
-    _form: 'Drupal\social_hub\Form\SettingsForm'
-  requirements:
-    _permission: 'administer social_hub configuration'
-
 entity.platform.collection:
   path: '/admin/config/services/social-hub/platform'
   defaults:
     _entity_list: 'platform'
-    _title: 'Available platforms'
+    _title: 'Social Hub'
   requirements:
     _permission: 'administer social_hub configuration'
 
