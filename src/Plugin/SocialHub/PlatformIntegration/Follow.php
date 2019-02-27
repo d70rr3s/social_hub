@@ -3,6 +3,7 @@
 namespace Drupal\social_hub\Plugin\SocialHub\PlatformIntegration;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Url;
 use Drupal\social_hub\PlatformIntegrationPluginBase;
 
@@ -54,8 +55,7 @@ class Follow extends PlatformIntegrationPluginBase {
     $form['link_text'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Link text'),
-      '#description' => $this->t('The text used when rendering the link. Leave it empty to rely on CSS classes to render the link.'),
-      // NOSONAR
+      '#description' => $this->t('The text used when rendering the link. Leave it empty to rely on CSS classes to render the link.'), // NOSONAR
       '#default_value' => $this->configuration['link_text'],
       '#field_suffix' => [
         '#theme' => 'token_tree_link',
@@ -92,8 +92,11 @@ class Follow extends PlatformIntegrationPluginBase {
    * {@inheritdoc}
    */
   public function build(array $context = []) {
+    $context = $this->prepareContext($context);
+    $this->metadata = new BubbleableMetadata();
     $options = ['absolute' => TRUE, 'external' => TRUE];
-    $uri = sprintf('%s/%s', $this->configuration['platform_url'], $this->configuration['follow_path']);
+    $path = $this->token->replace($this->configuration['follow_path'], $context, [], $this->metadata);
+    $uri = sprintf('%s/%s', $this->configuration['platform_url'], $path);
     $build = [
       '#type' => 'link',
       '#url' => Url::fromUri($uri, $options),
@@ -105,17 +108,19 @@ class Follow extends PlatformIntegrationPluginBase {
     ];
 
     if (!empty($this->configuration['link_text'])) {
-      $build['#title'] = $this->configuration['link_text'];
+      $build['#title'] = $this->token->replace($this->configuration['link_text'], $context, [], $this->metadata);
     }
 
     if (!empty($this->configuration['link_title'])) {
-      $build['#attributes']['title'] = $this->configuration['link_title'];
+      $build['#attributes']['title'] = $this->token->replace($this->configuration['link_title'], $context, [], $this->metadata);
     }
 
     if (!empty(trim($this->configuration['link_classes']))) {
       $classes = explode(' ', trim($this->configuration['link_classes']));
       $build['#attributes']['class'] = $classes;
     }
+
+    $this->metadata->applyTo($build);
 
     return $build;
   }

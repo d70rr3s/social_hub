@@ -11,6 +11,7 @@ use Drupal\Core\Plugin\PluginBase;
 use Drupal\Core\Plugin\PluginWithFormsTrait;
 use Drupal\Core\Routing\CurrentRouteMatch;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Utility\Token;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -32,7 +33,26 @@ abstract class PlatformIntegrationPluginBase extends PluginBase implements
    */
   protected $routeMatch;
 
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
   protected $currentUser;
+
+  /**
+   * The render metadata.
+   *
+   * @var \Drupal\Core\Render\BubbleableMetadata
+   */
+  protected $metadata;
+
+  /**
+   * The token service.
+   *
+   * @var \Drupal\Core\Utility\Token
+   */
+  protected $token;
 
   /**
    * Constructs PlatformPluginBase instance.
@@ -47,17 +67,21 @@ abstract class PlatformIntegrationPluginBase extends PluginBase implements
    *   The current matched route.
    * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
+   * @param \Drupal\Core\Utility\Token $token
+   *   The token service.
    */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
     CurrentRouteMatch $route_match,
-    AccountInterface $current_user) {
+    AccountInterface $current_user,
+    Token $token) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->setConfiguration($configuration);
     $this->routeMatch = $route_match;
     $this->currentUser = $current_user;
+    $this->token = $token;
   }
 
   /**
@@ -69,7 +93,8 @@ abstract class PlatformIntegrationPluginBase extends PluginBase implements
       $plugin_id,
       $plugin_definition,
       $container->get('current_route_match'),
-      $container->get('current_user')
+      $container->get('current_user'),
+      $container->get('token')
     );
   }
 
