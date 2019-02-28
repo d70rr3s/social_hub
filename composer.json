@@ -11,5 +11,8 @@
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "require": {}
+    "require": {},
+    "suggest": {
+        "drupal/efs": "To allow display platforms per entity/bundle using extra fields."
+    }
 }
