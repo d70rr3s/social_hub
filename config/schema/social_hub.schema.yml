@@ -27,6 +27,25 @@ social_hub_platform_configuration:
     id:
       type: string
       label: Plugin ID
+    link:
+      type: mapping
+      label: 'Link settings'
+      mapping:
+        type:
+          type: string
+          label: 'Link type'
+        icon:
+          type: string
+          label: 'Link icon'
+        text:
+          type: label
+          label: 'Link text'
+        title:
+          type: label
+          label: 'Link title'
+        classes:
+          type: string
+          label: 'Link CSS classes'
 
 social_hub.platform.plugin.*:
   type: social_hub_platform_configuration
@@ -40,25 +59,19 @@ social_hub.platform.plugin.follow:
     follow_path:
       type: string
       label: 'Follow path'
-    link_text:
-      type: label
-      label: 'Link text'
-    link_title:
-      type: label
-      label: 'Link title'
-    link_classes:
-      type: string
-      label: 'Link CSS classes'
 
 social_hub.platform.plugin.share:
   type: social_hub_platform_configuration
   mapping:
-    share_url:
+    sharing_mode:
       type: string
-      label: 'Share URL'
-    share_parameters:
+      label: 'Sharing mode'
+    url:
       type: string
-      label: 'Share parameters'
+      label: URL
+    embed:
+      type: string
+      label: Embed
     script_type:
       type: string
       label: 'Script type'
@@ -91,12 +104,3 @@ social_hub.platform.plugin.share:
         browsers:
           type: string
           label: Browsers
-    link_text:
-      type: label
-      label: 'Link text'
-    link_title:
-      type: label
-      label: 'Link title'
-    link_classes:
-      type: string
-      label: 'Link CSS classes'

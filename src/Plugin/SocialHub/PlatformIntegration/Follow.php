@@ -2,6 +2,7 @@
 
 namespace Drupal\social_hub\Plugin\SocialHub\PlatformIntegration;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\BubbleableMetadata;
 use Drupal\Core\Url;
@@ -52,38 +53,7 @@ class Follow extends PlatformIntegrationPluginBase {
       ],
     ];
 
-    $form['link_text'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link text'),
-      '#description' => $this->t('The text used when rendering the link. Leave it empty to rely on CSS classes to render the link.'), // NOSONAR
-      '#default_value' => $this->configuration['link_text'],
-      '#field_suffix' => [
-        '#theme' => 'token_tree_link',
-        '#text' => $this->t('Tokens'),
-        '#token_types' => 'all',
-        '#theme_wrappers' => ['container'],
-      ],
-    ];
-
-    $form['link_title'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link title'),
-      '#description' => $this->t('The text used for the title attribute which is used by screen readers. This setting should set for full accessibility support.'), // NOSONAR
-      '#default_value' => $this->configuration['link_title'],
-      '#field_suffix' => [
-        '#theme' => 'token_tree_link',
-        '#text' => $this->t('Tokens'),
-        '#token_types' => 'all',
-        '#theme_wrappers' => ['container'],
-      ],
-    ];
-
-    $form['link_classes'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link CSS classes'),
-      '#description' => $this->t('A list of space-separated CSS classes to apply to the link element. E.g. "class-1 class-2".'), // NOSONAR
-      '#default_value' => $this->configuration['link_classes'],
-    ];
+    $form += $this->buildLinkSectionForm();
 
     return $form;
   }
@@ -93,29 +63,33 @@ class Follow extends PlatformIntegrationPluginBase {
    */
   public function build(array $context = []) {
     $context = $this->prepareContext($context);
+    /** @var \Drupal\social_hub\PlatformInterface $platform */
+    $platform = $context['platform'] ?? NULL;
     $this->metadata = new BubbleableMetadata();
     $options = ['absolute' => TRUE, 'external' => TRUE];
     $path = $this->token->replace($this->configuration['follow_path'], $context, [], $this->metadata);
     $uri = sprintf('%s/%s', $this->configuration['platform_url'], $path);
     $build = [
-      '#type' => 'link',
-      '#url' => Url::fromUri($uri, $options),
-      '#title' => '',
+      '#type' => 'follow',
+      '#url' => Url::fromUri($uri, $options)->toString(),
       '#attributes' => [
-        'class' => [],
+        'id' => Html::getUniqueId($platform->id() . '_' . $this->getPluginId()),
+        'class' => [
+          Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId()),
+        ],
         'target' => '_blank',
       ],
     ];
 
-    if (!empty($this->configuration['link_text'])) {
+    if (!empty($this->configuration['link']['text'])) {
       $build['#title'] = $this->token->replace($this->configuration['link_text'], $context, [], $this->metadata);
     }
 
-    if (!empty($this->configuration['link_title'])) {
+    if (!empty($this->configuration['link']['title'])) {
       $build['#attributes']['title'] = $this->token->replace($this->configuration['link_title'], $context, [], $this->metadata);
     }
 
-    if (!empty(trim($this->configuration['link_classes']))) {
+    if (!empty(trim($this->configuration['link']['classes']))) {
       $classes = explode(' ', trim($this->configuration['link_classes']));
       $build['#attributes']['class'] = $classes;
     }

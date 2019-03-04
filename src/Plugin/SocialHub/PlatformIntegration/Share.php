@@ -2,6 +2,7 @@
 
 namespace Drupal\social_hub\Plugin\SocialHub\PlatformIntegration;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
@@ -32,6 +33,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class Share extends PlatformIntegrationPluginBase {
 
+  const SHARING_MODE_URL = 'url';
+
+  const SHARING_MODE_EMBED = 'embed';
+
   const SCRIPT_TYPE_NONE = '_none';
 
   const SCRIPT_TYPE_INLINE = 'inline';
@@ -46,6 +51,13 @@ class Share extends PlatformIntegrationPluginBase {
    * @var \Drupal\social_hub\Utils\ChainedLibrariesResolverInterface
    */
   private $librariesResolver;
+
+  /**
+   * Debug mode flag.
+   *
+   * @var bool
+   */
+  private $debug;
 
   /**
    * Constructs Share instance.
@@ -64,6 +76,8 @@ class Share extends PlatformIntegrationPluginBase {
    *   The token service.
    * @param \Drupal\social_hub\Utils\ChainedLibrariesResolverInterface $libraries_resolver
    *   The chain-resolver for libraries.
+   * @param bool $debug
+   *   Debug mode flag.
    */
   public function __construct(
     array $configuration,
@@ -72,9 +86,11 @@ class Share extends PlatformIntegrationPluginBase {
     CurrentRouteMatch $route_match,
     AccountInterface $current_user,
     Token $token,
-    ChainedLibrariesResolverInterface $libraries_resolver) {
+    ChainedLibrariesResolverInterface $libraries_resolver,
+    bool $debug = FALSE) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $route_match, $current_user, $token);
     $this->librariesResolver = $libraries_resolver;
+    $this->debug = $debug;
   }
 
   /**
@@ -88,7 +104,8 @@ class Share extends PlatformIntegrationPluginBase {
       $container->get('current_route_match'),
       $container->get('current_user'),
       $container->get('token'),
-      $container->get('social_hub.chained_libraries_resolver')
+      $container->get('social_hub.chained_libraries_resolver'),
+      $container->getParameter('twig.config')['debug'] ?? FALSE
     );
   }
 
@@ -97,12 +114,13 @@ class Share extends PlatformIntegrationPluginBase {
    */
   public function defaultConfiguration() {
     $defaults = [
-      'share_url' => NULL,
-      'share_parameters' => NULL,
-      'script_type' => '_none',
-      'inline' => NULL,
-      'library' => NULL,
-      'external' => [
+      'sharing_mode' => self::SHARING_MODE_URL,
+      self::SHARING_MODE_URL => NULL,
+      self::SHARING_MODE_EMBED => NULL,
+      'script_type' => self::SCRIPT_TYPE_NONE,
+      self::SCRIPT_TYPE_INLINE => NULL,
+      self::SCRIPT_TYPE_LIBRARY => NULL,
+      self::SCRIPT_TYPE_EXTERNAL => [
         'url' => NULL,
         'attributes' => [
           'async' => TRUE,
@@ -111,9 +129,6 @@ class Share extends PlatformIntegrationPluginBase {
         'preprocess' => FALSE,
         'browsers' => NULL,
       ],
-      'link_text' => NULL,
-      'link_title' => NULL,
-      'link_classes' => NULL,
     ];
 
     return $defaults + parent::defaultConfiguration();
@@ -125,25 +140,57 @@ class Share extends PlatformIntegrationPluginBase {
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $form['share_url'] = [
-      '#type' => 'url',
-      '#title' => $this->t('Share URL'),
-      '#description' => $this->t('The platform share URL without any parameters aka query-string. E.g. https://example.com/shareArticle'), // NOSONAR
+    $form['sharing_mode'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Sharing mode'),
+      '#description' => $this->t('Choose how the share is going to happen.'), // NOSONAR
+      '#options' => [
+        self::SHARING_MODE_URL => $this->t('URL'),
+        self::SHARING_MODE_EMBED => $this->t('Embed'),
+      ],
+      '#default_value' => $this->configuration['sharing_mode'] ?? self::SHARING_MODE_URL,
       '#required' => TRUE,
-      '#default_value' => $this->configuration['share_url'] ?? NULL,
     ];
 
-    $form['share_parameters'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Share parameters'),
-      '#description' => $this->t('The parameters aka query-string with the share values. E.g. u=[node:url]&p=[node:title]'), // NOSONAR
-      '#required' => TRUE,
-      '#default_value' => $this->configuration['share_parameters'] ?? NULL,
+    $form[self::SHARING_MODE_URL] = [
+      '#type' => 'url',
+      '#title' => $this->t('URL'),
+      '#description' => $this->t('Typically an URL from which share to or from.'), // NOSONAR
+      '#default_value' => $this->configuration[self::SHARING_MODE_URL] ?? NULL,
       '#field_suffix' => [
         '#theme' => 'token_tree_link',
         '#text' => $this->t('Tokens'),
         '#token_types' => 'all',
         '#theme_wrappers' => ['container'],
+      ],
+      '#states' => [
+        'visible' => [
+          'input[name*="sharing_mode"]' => ['checked' => TRUE, 'value' => self::SHARING_MODE_URL],
+        ],
+        'required' => [
+          'input[name*="sharing_mode"]' => ['checked' => TRUE, 'value' => self::SHARING_MODE_URL],
+        ],
+      ],
+    ];
+
+    $form[self::SHARING_MODE_EMBED] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Embed'),
+      '#description' => $this->t('Typically an iframe code to embed in other web pages. In order to this work properly you must select `Library` for script type and later pick up the `social_hub/share_embed` library.'), // NOSONAR
+      '#default_value' => $this->configuration[self::SHARING_MODE_EMBED] ?? NULL,
+      '#field_suffix' => [
+        '#theme' => 'token_tree_link',
+        '#text' => $this->t('Tokens'),
+        '#token_types' => 'all',
+        '#theme_wrappers' => ['container'],
+      ],
+      '#states' => [
+        'visible' => [
+          'input[name*="sharing_mode"]' => ['checked' => TRUE, 'value' => self::SHARING_MODE_EMBED],
+        ],
+        'required' => [
+          'input[name*="sharing_mode"]' => ['checked' => TRUE, 'value' => self::SHARING_MODE_EMBED],
+        ],
       ],
     ];
 
@@ -157,7 +204,7 @@ class Share extends PlatformIntegrationPluginBase {
         self::SCRIPT_TYPE_LIBRARY => $this->t('Library*'),
         self::SCRIPT_TYPE_EXTERNAL => $this->t('External*'),
       ],
-      '#default_value' => $this->configuration['script_type'] ?? '_none',
+      '#default_value' => $this->configuration['script_type'] ?? self::SCRIPT_TYPE_NONE,
     ];
 
     $form[self::SCRIPT_TYPE_INLINE] = [
@@ -198,39 +245,7 @@ class Share extends PlatformIntegrationPluginBase {
     ];
 
     $form += $this->buildExternalSectionForm();
-
-    $form['link_text'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link text'),
-      '#description' => $this->t('The text used when rendering the link. Leave it empty to rely on CSS classes to render the link.'), // NOSONAR
-      '#default_value' => $this->configuration['link_text'] ?? NULL,
-      '#field_suffix' => [
-        '#theme' => 'token_tree_link',
-        '#text' => $this->t('Tokens'),
-        '#token_types' => 'all',
-        '#theme_wrappers' => ['container'],
-      ],
-    ];
-
-    $form['link_title'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link title'),
-      '#description' => $this->t('The text used for the title attribute which is used by screen readers. This setting should set for full accessibility support.'), // NOSONAR
-      '#default_value' => $this->configuration['link_title'] ?? NULL,
-      '#field_suffix' => [
-        '#theme' => 'token_tree_link',
-        '#text' => $this->t('Tokens'),
-        '#token_types' => 'all',
-        '#theme_wrappers' => ['container'],
-      ],
-    ];
-
-    $form['link_classes'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Link CSS classes'),
-      '#description' => $this->t('A list of space-separated CSS classes to apply to the link element. E.g. "class-1 class-2".'), // NOSONAR
-      '#default_value' => $this->configuration['link_classes'] ?? NULL,
-    ];
+    $form += $this->buildLinkSectionForm();
 
     return $form;
   }
@@ -336,24 +351,31 @@ class Share extends PlatformIntegrationPluginBase {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $this->cleanValues($form, $form_state);
     parent::submitConfigurationForm($form, $form_state);
-    $this->configuration['share_url'] = trim($this->configuration['share_url'], "? \t\n\r\0\x0B");
-    $this->configuration['share_parameters'] = trim($this->configuration['share_parameters'], "? \t\n\r\0\x0B");
     // Force libraries cache to be rebuild
     Cache::invalidateTags(['library_info']);
   }
 
   /**
-   * Clean submitted values.
-   *
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
+   * {@inheritdoc}
    */
-  private function cleanValues(array $form, FormStateInterface $form_state) {
+  protected function cleanValues(array $form, FormStateInterface $form_state) {
+    parent::cleanValues($form, $form_state);
     $configuration = NestedArray::getValue($form_state->getValues(), $form['#parents']);
+
+    if ($configuration['sharing_mode'] === self::SHARING_MODE_URL) {
+      unset($configuration[self::SHARING_MODE_EMBED]);
+    }
+    else {
+      unset($configuration[self::SHARING_MODE_URL]);
+    }
+
+    if ($configuration['sharing_mode'] === self::SHARING_MODE_URL) {
+      unset($configuration[self::SHARING_MODE_EMBED]);
+    }
+    else {
+      unset($configuration[self::SHARING_MODE_URL]);
+    }
 
     switch ($configuration['script_type']) {
       case self::SCRIPT_TYPE_INLINE:
@@ -389,52 +411,89 @@ class Share extends PlatformIntegrationPluginBase {
     /** @var \Drupal\social_hub\PlatformInterface $platform */
     $platform = $context['platform'] ?? NULL;
     $this->metadata = new BubbleableMetadata();
-    $options = [
-      'absolute' => TRUE,
-      self::SCRIPT_TYPE_EXTERNAL => TRUE,
-      'query' => [],
-    ];
-
-    parse_str($this->token->replace($this->configuration['share_parameters'], $context, [], $this->metadata), $options['query']);
+    $url = $this->getUrl($context);
+    $url_object = $url->toString(TRUE);
+    $url_string = $url_object->getGeneratedUrl();
+    $this->metadata->addCacheableDependency($url);
 
     $build = [
-      '#type' => 'link',
-      '#url' => Url::fromUri($this->configuration['share_url'], $options),
-      '#title' => '',
+      '#theme' => $this->getPluginId(),
+      '#url' => $url_string,
+      '#link_type' => $this->configuration['link']['type'],
+      '#sharing_mode' => self::SHARING_MODE_EMBED,
       '#attributes' => [
-        'class' => [],
-        'target' => '_blank',
+        'id' => Html::getUniqueId($platform->id() . '_' . $this->getPluginId()),
+        'class' => [
+          Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId()),
+          Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId() . '__' . $this->configuration['sharing_mode']),
+        ],
+        // Store the URL also in an attribute to make it cross-theme function.
+        'data-social-hub' => \GuzzleHttp\json_encode([
+          'platform' => $platform->id(),
+          'plugin' => $this->getPluginId(),
+          'sharingMode' => $this->configuration['sharing_mode'],
+          'url' => $url_string,
+        ], JSON_FORCE_OBJECT),
       ],
     ];
 
-    if (!empty($this->configuration['link_text'])) {
-      $build['#title'] = $this->token->replace($this->configuration['link_text'], $context, [], $this->metadata);
+    if ($this->configuration['sharing_mode'] === self::SHARING_MODE_EMBED) {
+      $build += [
+        '#extras' => [
+          'embed_value' => $this->configuration[self::SHARING_MODE_EMBED],
+          'embed_attributes' => [
+            'class' => [
+              'element-invisible',
+              Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId()),
+              Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId() . '__' . $this->configuration['sharing_mode']),
+              Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId()),
+              Html::getClass($platform->id()) . '_' . Html::getClass($this->getPluginId() . '__' . $this->configuration['sharing_mode']) . '__code', // NOSONAR
+            ],
+            'data-referenced-by' => $build['#attributes']['id'],
+          ],
+        ],
+      ];
     }
 
-    if (!empty($this->configuration['link_title'])) {
-      $build['#attributes']['title'] = $this->token->replace($this->configuration['link_title'], $context, [], $this->metadata);
+    if ($this->configuration['sharing_mode'] === self::SHARING_MODE_URL) {
+      $build['#attributes']['target'] = '_blank';
     }
 
-    if (!empty(trim($this->configuration['link_classes']))) {
-      $classes = explode(' ', trim($this->configuration['link_classes']));
-      $build['#attributes']['class'] = $classes;
+    if ($this->configuration['link']['type'] === self::LINK_TYPE_TEXT &&
+      !empty($this->configuration['link']['text'])) {
+      $build['#text'] = $this->token->replace($this->configuration['link']['text'], $context, [], $this->metadata);
+    }
+
+    if ($this->configuration['link']['type'] === self::LINK_TYPE_ICON) {
+      $build['#icon'] = $this->configuration['link']['icon'];
+      $this->metadata->addAttachments(['library' => ['social_hub/icons']]);
+    }
+
+    if (!empty($this->configuration['link']['title'])) {
+      $build['#attributes']['title'] = $this->token->replace($this->configuration['link']['title'], $context, [], $this->metadata);
+    }
+
+    if (!empty(trim($this->configuration['link']['classes']))) {
+      $classes = explode(' ', trim($this->configuration['link']['classes']));
+      $build['#attributes']['class'] = array_merge($build['#attributes']['class'], $classes);
     }
 
     switch ($this->configuration['script_type']) {
       case self::SCRIPT_TYPE_INLINE:
-        $build = array_merge($build, [
-          '#type' => 'html_tag',
-          '#tag' => 'script',
-          '#value' => $this->token->replace($this->configuration[self::SCRIPT_TYPE_INLINE], $context, [], $this->metadata),
-          '#attributes' => [
-            'type' => 'text/javascript',
-          ],
-        ]);
+        $build += [
+          '#script' => $this->token->replace($this->configuration[self::SCRIPT_TYPE_INLINE], $context, [], $this->metadata),
+        ];
         break;
 
       case self::SCRIPT_TYPE_LIBRARY:
         $this->metadata->addAttachments([
           'library' => [$this->configuration[self::SCRIPT_TYPE_LIBRARY]],
+          'drupalSettings' => [
+            'socialHub' => [
+              'instances' => ["#{$build['#attributes']['id']}"],
+              'debug' => $this->debug ?? FALSE,
+            ],
+          ],
         ]);
         break;
 
@@ -452,6 +511,36 @@ class Share extends PlatformIntegrationPluginBase {
     $this->metadata->applyTo($build);
 
     return $build;
+  }
+
+  /**
+   * Get valid sharing URL.
+   *
+   * @param array $context
+   *   An array of context data.
+   *
+   * @return \Drupal\Core\Url
+   *   The sharing URL.
+   */
+  private function getUrl(array $context) {
+    if ($this->configuration['sharing_mode'] === self::SHARING_MODE_EMBED) {
+      return Url::fromRoute('<nolink>');
+    }
+
+    $url = $this->configuration[self::SHARING_MODE_URL];
+    $options = [
+      'absolute' => TRUE,
+      'external' => TRUE,
+      'query' => [],
+      'fragment' => parse_url($url, PHP_URL_FRAGMENT),
+    ];
+    parse_str($this->token->replace(parse_url($url, PHP_URL_QUERY), $context, [], $this->metadata), $options['query']);
+    $scheme = parse_url($url, PHP_URL_SCHEME) . '://';
+    $host = parse_url($url, PHP_URL_HOST);
+    $path = parse_url($url, PHP_URL_PATH);
+    $uri = $scheme . $host . $path;
+
+    return Url::fromUri($uri, $options);
   }
 
 }
