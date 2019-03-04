@@ -18,19 +18,26 @@ font-awesome:
       https://use.fontawesome.com/releases/v5.7.2/css/brands.css: { type: external, minified: true }
       https://use.fontawesome.com/releases/v5.7.2/css/fontawesome.css: { type: external, minified: true }
 
-share.embed:
+share.copy:
   version: 1.x
   js:
-    assets/js/social_hub.share.embed.js: {}
-    assets/js/social_hub.cp.js: {}
+    assets/js/social_hub.share.copy.js: {}
   css:
     component:
       assets/css/social_hub.popup.css: {}
   drupalSettings:
     socialHub:
-      debug: false
+      instances: []
+
+share.embed:
+  version: 1.x
+  js:
+    assets/js/social_hub.share.embed.js: {}
+  drupalSettings:
+    socialHub:
       instances: []
   dependencies:
     - core/jquery
     - core/jquery.once
     - core/drupal
+    - social_hub/share.copy

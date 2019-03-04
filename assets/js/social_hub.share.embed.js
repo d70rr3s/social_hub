@@ -10,32 +10,17 @@
   var socialHub = _ref2.socialHub;
 
   behaviors.socialHubShareEmbed = {
-    debug: false,
     attach: function attach() {
       var _this = this;
 
-      var debug = socialHub.debug,
-          instances = socialHub.instances;
-
-      this.debug = debug;
-
-      if (this.debug === true) {
-        console.log(instances);
-      }
+      var instances = socialHub.instances;
 
       for (var i = 0; i < instances.length; i++) {
         $(instances[i]).once('social_hub--share__embed').each(function (j, x) {
           var $elem = $(x);
-          var _settings = $elem.data('social-hub');
-
-          if (_this.debug === true) {
-            console.log(_settings);
-          }
-
           $elem.on('click', _this.toggleEmbed);
-
           $('[data-referenced-by="' + $elem.attr('id') + '"]').once('social_hub--clip_it').each(function (k, y) {
-            $(y).on('click', _this.copyOnClick);
+            $(y).clickToCopy();
           });
         });
       }
@@ -45,15 +30,6 @@
       var $embed = $('[data-referenced-by="' + $this.attr('id') + '"]');
       $embed.toggleClass('element-invisible');
       $this.toggleClass('active');
-
-      if (this.debug === true) {
-        var isActive = $this.hasClass('active');
-        var isVisible = !$embed.hasClass('element-invisible');
-        console.log('Active: ' + isActive + ', Visible: ' + isVisible);
-      }
-    },
-    copyOnClick: function copyOnClick(e) {
-      copyTextToClipboard($(e).target.val());
     }
   };
 })(jQuery, Drupal, drupalSettings);
