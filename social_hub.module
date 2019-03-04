@@ -67,8 +67,8 @@ function social_hub_preprocess_share(&$variables) {
  */
 function social_hub_preprocess_share__embed(&$variables) {
   _social_hub_preprocess_plugin($variables);
-  $variables['embed_attributes'] = new Attribute($variables['extras']['embed_attributes']);
-  $variables['embed_value'] = $variables['extras']['embed_value'];
+  $variables['embed_attributes'] = new Attribute($variables['extras']['embed_attributes'] ?? []);
+  $variables['embed_value'] = $variables['extras']['embed_value'] ?? NULL;
   unset($variables['extras']);
 }
 
