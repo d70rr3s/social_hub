@@ -32,7 +32,7 @@ class Follow extends PlatformIntegrationPluginBase {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $form['platform_url'] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('Platform URL'),
       '#description' => $this->t('The platform full URL, shall include the protocol and no trailing slash. E.g. https://example.com'), // NOSONAR
       '#required' => TRUE,

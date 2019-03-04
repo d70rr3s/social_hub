@@ -153,7 +153,7 @@ class Share extends PlatformIntegrationPluginBase {
     ];
 
     $form[self::SHARING_MODE_URL] = [
-      '#type' => 'url',
+      '#type' => 'textfield',
       '#title' => $this->t('URL'),
       '#description' => $this->t('Typically an URL from which share to or from.'), // NOSONAR
       '#default_value' => $this->configuration[self::SHARING_MODE_URL] ?? NULL,
@@ -527,14 +527,14 @@ class Share extends PlatformIntegrationPluginBase {
       return Url::fromRoute('<nolink>');
     }
 
-    $url = $this->configuration[self::SHARING_MODE_URL];
+    $url = $this->token->replace($this->configuration[self::SHARING_MODE_URL], $context, [], $this->metadata);
     $options = [
       'absolute' => TRUE,
       'external' => TRUE,
       'query' => [],
       'fragment' => parse_url($url, PHP_URL_FRAGMENT),
     ];
-    parse_str($this->token->replace(parse_url($url, PHP_URL_QUERY), $context, [], $this->metadata), $options['query']);
+    parse_str(parse_url($url, PHP_URL_QUERY), $options['query']);
     $scheme = parse_url($url, PHP_URL_SCHEME) . '://';
     $host = parse_url($url, PHP_URL_HOST);
     $path = parse_url($url, PHP_URL_PATH);
