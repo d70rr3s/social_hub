@@ -99,4 +99,16 @@ class Follow extends PlatformIntegrationPluginBase {
     return $build;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    $default = [
+      'platform_url' => NULL,
+      'follow_path' => NULL,
+    ];
+
+    return $default + parent::defaultConfiguration();
+  }
+
 }
