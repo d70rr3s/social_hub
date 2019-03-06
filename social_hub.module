@@ -7,9 +7,115 @@
  * @DCG
  * This file is no longer required in Drupal 8.
  * @see https://www.drupal.org/node/2217931
+ *
+ * @phpcs:disable Drupal.Semantics.FunctionT.ConcatString
  */
 
+include_once DRUPAL_ROOT . '/core/themes/engines/twig/twig.engine';
+
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Template\Attribute;
+
+/**
+ * Implements hook_help().
+ */
+function social_hub_help($route_name, RouteMatchInterface $route_match) {
+  $output = '';
+
+  if ($route_name !== 'help.page.social_hub' && !preg_match('/^social_hub\.+$/', $route_name)) {
+    return $output;
+  }
+
+  $filepath = [
+    \Drupal::moduleHandler()->getModule('social_hub')->getPath(),
+    'help',
+    $route_name . '.html.twig',
+  ];
+  $template_file = implode(DIRECTORY_SEPARATOR, $filepath);
+  $absolute_path = DRUPAL_ROOT . DIRECTORY_SEPARATOR . $template_file;
+
+  if (file_exists($absolute_path)) {
+    $variables = _social_hub_help_get_variables($route_name);
+    $output = twig_render_template($template_file, $variables + ['theme_hook_original' => 'not-applicable']);
+  }
+
+  return $output;
+}
+
+/**
+ * Get template variables for a given route.
+ *
+ * @param string $route_name
+ *   A route name.
+ *
+ * @return array
+ *   An assoc array of variables.
+ *
+ * @internal
+ */
+function _social_hub_help_get_variables($route_name) {
+  $variables = [
+    'help.page.social_hub' => [
+      'efs' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/efs',
+        ':title' => t(':name module page', [':name' => 'EFS'], ['context' => 'EFS']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'EFS'], ['context' => 'EFS'])]),
+        '@text' => t('here'),
+      ], ['context' => 'EFS'])),
+      'github' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://github.com/d70rr3s/social_hub',
+        ':title' => t('Social Hub issue tracker'),
+        ':label' => t('Click to visit :page', [':page' => t('Social Hub issue tracker')]),
+        '@text' => t('GitHub'),
+      ], ['context' => 'Social Hub'])),
+      'issues' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/issues/social_hub?categories=All',
+        ':title' => t('Social Hub issue tracker'),
+        ':label' => t('Click to visit :page', [':page' => t('Social Hub issue tracker')]),
+        '@text' => t('issue tracker on Drupal.org'),
+      ], ['context' => 'Issues'])),
+      'guidelines' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/issue-summaries',
+        ':title' => t('Issues guidelines'),
+        ':label' => t('Click to visit :page', [':page' => t('Issues guidelines')]),
+        '@text' => t('guidelines'),
+      ], ['context' => 'Issues guidelines'])),
+      'better_social_sharing_buttons' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/better_social_sharing_buttons',
+        ':title' => t(':name module page', [':name' => 'Better Social Sharing Buttons'], ['context' => 'BSSB']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'Better Social Sharing Buttons'], ['context' => 'BSSB'])]),
+        '@text' => t('Better Social Sharing Buttons'),
+      ], ['context' => 'BSSB'])),
+      'share_everywhere' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/share_everywhere',
+        ':title' => t(':name module page', [':name' => 'Share Everywhere'], ['context' => 'Share Everywhere']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'Share Everywhere'], ['context' => 'Share Everywhere'])]),
+        '@text' => t('Share Everywhere'),
+      ], ['context' => 'Share Everywhere'])),
+      'simplesharer' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/simplesharer',
+        ':title' => t(':name module page', [':name' => 'Simple Sharer'], ['context' => 'Simple Sharer']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'Simple Sharer'], ['context' => 'Simple Sharer'])]),
+        '@text' => t('Simple Sharer'),
+      ], ['context' => 'Simple Sharer'])),
+      'social_media' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/social_media',
+        ':title' => t(':name module page', [':name' => 'Social Media'], ['context' => 'Social Media']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'Social Media'], ['context' => 'Social Media'])]),
+        '@text' => t('Social Media'),
+      ], ['context' => 'Social Media'])),
+      'social_media_links' => Markup::create(t('<a href=:url target="_blank" title=":title" aria-label=":label">@text</a>', [
+        ':url' => 'https://www.drupal.org/project/social_media',
+        ':title' => t(':name module page', [':name' => 'Social Media Links'], ['context' => 'Social Media Links']),
+        ':label' => t('Click to visit :page', [':page' => t(':name module page', [':name' => 'Social Media Links'], ['context' => 'Social Media Links'])]),
+        '@text' => t('Social Media Links'),
+      ], ['context' => 'Social Media Links'])),
+    ],
+  ];
+
+  return $variables[$route_name] ?? [];
+}
 
 /**
  * Implements hook_theme().
