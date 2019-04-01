@@ -116,8 +116,8 @@ class PlatformsBlock extends BlockBase implements ContainerFactoryPluginInterfac
 
     $form['wrapper_classes'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Wrapper CSS classes'),
-      '#description' => $this->t('A list of space-separated CSS classes to apply to the wrapper around the link element. E.g. "class-1 class-2".'), // NOSONAR
+      '#title' => $this->t('CSS classes'),
+      '#description' => $this->t('A list of space-separated CSS classes to apply to the block. E.g. "class-1 class-2".'), // NOSONAR
       '#default_value' => $this->configuration['wrapper_classes'],
     ];
 
@@ -139,21 +139,18 @@ class PlatformsBlock extends BlockBase implements ContainerFactoryPluginInterfac
    */
   public function build() {
     $this->fetchEntities();
-    $build = [
-      '#theme' => 'item_list',
-      '#items' => [],
-    ];
-    $metadata = BubbleableMetadata::createFromRenderArray($build);
+    $build = [];
+    $metadata = BubbleableMetadata::createFromObject($this);
 
     if (!empty(trim($this->configuration['wrapper_classes']))) {
       $classes = explode(' ', trim($this->configuration['wrapper_classes']));
-      $build['#wrapper_attributes']['class'] = $classes;
+      $build['#attributes']['class'] = $classes;
     }
 
     foreach ($this->entities as $entity) {
       $item = $entity->build($this->configuration['plugins']);
       $metadata->merge(BubbleableMetadata::createFromRenderArray($item));
-      $build['#items'][] = $item;
+      $build[] = $item;
     }
 
     $metadata->applyTo($build);

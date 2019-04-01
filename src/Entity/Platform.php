@@ -158,8 +158,9 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
    */
   public function build(array $plugins = [], array $context = []) {
     $build = [
-      '#type' => 'container',
-      '#title_display' => FALSE,
+      '#theme' => 'platform',
+      '#entity' => $this,
+      '#content' => [],
     ];
 
     $context += [
@@ -172,7 +173,7 @@ class Platform extends ConfigEntityBase implements PlatformInterface {
         continue;
       }
 
-      $build[] = $plugin->build($context);
+      $build['#content'][] = $plugin->build($context);
     }
 
     BubbleableMetadata::createFromRenderArray($build)

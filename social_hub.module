@@ -147,9 +147,30 @@ function social_hub_theme() {
       'variables' => $base_variables,
       'template' => 'follow',
     ],
+    'platform' => [
+      'variables' => [
+        'entity' => NULL,
+        'content' => NULL,
+      ],
+    ],
   ];
 
   return $hooks;
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function social_hub_theme_suggestions_platform(array $variables) {
+  /** @var \Drupal\social_hub\PlatformInterface $entity */
+  $entity = $variables['entity'];
+  $suggestions[] = 'platform__' . $entity->id();
+
+  foreach ($entity->getPlugins() as $plugin) {
+    $suggestions[] = 'platform__' . $entity->id() . '__' . $plugin;
+  }
+
+  return $suggestions;
 }
 
 /**
