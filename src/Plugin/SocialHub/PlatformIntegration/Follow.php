@@ -82,15 +82,15 @@ class Follow extends PlatformIntegrationPluginBase {
     ];
 
     if (!empty($this->configuration['link']['text'])) {
-      $build['#title'] = $this->token->replace($this->configuration['link_text'], $context, [], $this->metadata);
+      $build['#title'] = $this->token->replace($this->configuration['link']['text'], $context, [], $this->metadata);
     }
 
     if (!empty($this->configuration['link']['title'])) {
-      $build['#attributes']['title'] = $this->token->replace($this->configuration['link_title'], $context, [], $this->metadata);
+      $build['#attributes']['title'] = $this->token->replace($this->configuration['link']['title'], $context, [], $this->metadata);
     }
 
     if (!empty(trim($this->configuration['link']['classes']))) {
-      $classes = explode(' ', trim($this->configuration['link_classes']));
+      $classes = explode(' ', trim($this->configuration['link']['classes']));
       $build['#attributes']['class'] = $classes;
     }
 
