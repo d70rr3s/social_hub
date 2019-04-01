@@ -336,6 +336,7 @@ class Platforms extends ExtraFieldFormatterPluginBase {
   private function fetchEntities(array $selected_plugins) {
     $results = $this->getEntityStorage()->getQuery()
       ->condition('plugins.*', $selected_plugins, 'IN')
+      ->condition('status', 1)
       ->execute();
 
     if (!empty($results)) {

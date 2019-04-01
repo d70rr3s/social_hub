@@ -164,6 +164,7 @@ class PlatformsBlock extends BlockBase implements ContainerFactoryPluginInterfac
   private function fetchEntities() {
     $results = $this->storage->getQuery()
       ->condition('plugins.*', $this->configuration['plugins'], 'IN')
+      ->condition('status', 1)
       ->execute();
 
     if (!empty($results)) {
