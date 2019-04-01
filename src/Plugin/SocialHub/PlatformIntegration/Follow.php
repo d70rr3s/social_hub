@@ -70,7 +70,7 @@ class Follow extends PlatformIntegrationPluginBase {
     $path = $this->token->replace($this->configuration['follow_path'], $context, [], $this->metadata);
     $uri = sprintf('%s/%s', $this->configuration['platform_url'], $path);
     $build = [
-      '#type' => 'follow',
+      '#theme' => $this->getPluginId(),
       '#url' => Url::fromUri($uri, $options)->toString(),
       '#attributes' => [
         'id' => Html::getUniqueId($platform->id() . '_' . $this->getPluginId()),
